@@ -1,0 +1,72 @@
+<div class="font-customizer-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Font Customizer</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <!-- Enable/Disable -->
+            <div class="flex-container">
+                <input id="font_customizer_enabled" type="checkbox" />
+                <label for="font_customizer_enabled">Enable Font Customizer</label>
+            </div>
+
+            <hr class="sysHR" />
+
+            <!-- Font Source -->
+            <label for="font_customizer_source">Font Source</label>
+            <select id="font_customizer_source" class="text_pole">
+                <option value="system">System / Generic</option>
+                <option value="google">Google Fonts</option>
+            </select>
+
+            <!-- System Font Family -->
+            <div id="font_customizer_system_group">
+                <label for="font_customizer_family">Font Family</label>
+                <input id="font_customizer_family" type="text" class="text_pole" placeholder="e.g. Arial, serif, monospace" />
+            </div>
+
+            <!-- Google Font Name -->
+            <div id="font_customizer_google_group" style="display:none;">
+                <label for="font_customizer_google_font">Google Font Name</label>
+                <input id="font_customizer_google_font" type="text" class="text_pole" placeholder="e.g. Roboto, Noto Sans SC" />
+                <small class="font_customizer_hint">Enter the exact name from <a href="https://fonts.google.com/" target="_blank">Google Fonts</a></small>
+            </div>
+
+            <hr class="sysHR" />
+
+            <!-- Font Size -->
+            <label for="font_customizer_size">Chat Font Size (<span id="font_customizer_size_value">default</span>)</label>
+            <input id="font_customizer_size" type="range" min="10" max="36" step="1" />
+
+            <!-- Line Height -->
+            <label for="font_customizer_line_height">Line Height (<span id="font_customizer_line_height_value">default</span>)</label>
+            <input id="font_customizer_line_height" type="range" min="1.0" max="3.0" step="0.1" />
+
+            <!-- Letter Spacing -->
+            <label for="font_customizer_letter_spacing">Letter Spacing (<span id="font_customizer_letter_spacing_value">0</span>px)</label>
+            <input id="font_customizer_letter_spacing" type="range" min="-2" max="5" step="0.5" />
+
+            <hr class="sysHR" />
+
+            <!-- Apply Scope -->
+            <label for="font_customizer_scope">Apply To</label>
+            <select id="font_customizer_scope" class="text_pole">
+                <option value="chat">Chat Messages Only</option>
+                <option value="ui">Entire UI</option>
+            </select>
+
+            <hr class="sysHR" />
+
+            <!-- Preview -->
+            <div id="font_customizer_preview" class="font_customizer_preview_box">
+                The quick brown fox jumps over the lazy dog. 0123456789
+            </div>
+
+            <!-- Reset Button -->
+            <div class="flex-container">
+                <input id="font_customizer_reset" class="menu_button" type="submit" value="Reset to Defaults" />
+            </div>
+        </div>
+    </div>
+</div>

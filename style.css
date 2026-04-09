@@ -1,0 +1,43 @@
+/* Font Customizer Extension Styles */
+
+.font-customizer-settings .flex-container {
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.font-customizer-settings .flex-container label {
+    margin: 0;
+    display: inline;
+}
+
+.font-customizer-settings .inline-drawer-content > label {
+    margin-top: 8px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.font-customizer-settings .inline-drawer-content select,
+.font-customizer-settings .inline-drawer-content input[type="text"] {
+    width: 100%;
+}
+
+.font-customizer-settings .inline-drawer-content input[type="range"] {
+    width: 100%;
+    margin: 4px 0 8px 0;
+}
+
+.font_customizer_hint {
+    display: block;
+    opacity: 0.6;
+    font-size: 0.85em;
+    margin-top: 2px;
+}
+
+.font_customizer_preview_box {
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 5px;
+    padding: 10px;
+    margin: 8px 0;
+    min-height: 50px;
+    background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.2));
+}

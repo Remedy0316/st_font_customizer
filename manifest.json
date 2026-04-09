@@ -1,0 +1,12 @@
+{
+    "display_name": "Font Customizer",
+    "loading_order": 10,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "ST Font Extension",
+    "version": "1.0.0",
+    "homePage": "",
+    "auto_update": true
+}
