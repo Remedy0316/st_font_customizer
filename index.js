@@ -9,6 +9,7 @@ const defaultSettings = Object.freeze({
     source: 'system',        // 'system' or 'google'
     fontFamily: '',           // system/generic font family
     googleFont: '',           // Google Fonts font name
+    googleFontHistory: [],    // saved Google Font names
     fontSize: 0,              // 0 = use default
     lineHeight: 0,            // 0 = use default
     letterSpacing: 0,
@@ -238,6 +239,43 @@ function onGoogleFontChange() {
     saveAndApply();
 }
 
+function onSaveGoogleFont() {
+    const settings = getSettings();
+    const fontName = settings.googleFont;
+    if (!fontName) return;
+    if (!Array.isArray(settings.googleFontHistory)) {
+        settings.googleFontHistory = [];
+    }
+    if (!settings.googleFontHistory.includes(fontName)) {
+        settings.googleFontHistory.push(fontName);
+        const { saveSettingsDebounced } = SillyTavern.getContext();
+        saveSettingsDebounced();
+        populateGoogleFontHistory();
+        toastr.success(`"${fontName}" saved to font history.`);
+    } else {
+        toastr.info(`"${fontName}" is already in font history.`);
+    }
+}
+
+function onClearGoogleHistory() {
+    const settings = getSettings();
+    settings.googleFontHistory = [];
+    const { saveSettingsDebounced } = SillyTavern.getContext();
+    saveSettingsDebounced();
+    populateGoogleFontHistory();
+    toastr.info('Google Font history cleared.');
+}
+
+function populateGoogleFontHistory() {
+    const settings = getSettings();
+    const datalist = $('#font_customizer_google_font_list');
+    datalist.empty();
+    if (!Array.isArray(settings.googleFontHistory)) return;
+    for (const font of settings.googleFontHistory) {
+        datalist.append($('<option>').val(font));
+    }
+}
+
 function onFontSizeChange() {
     const settings = getSettings();
     const val = parseInt($('#font_customizer_size').val(), 10);
@@ -290,6 +328,8 @@ jQuery(async () => {
     $('#font_customizer_source').on('change', onSourceChange);
     $('#font_customizer_family').on('input', onFamilyChange);
     $('#font_customizer_google_font').on('input', onGoogleFontChange);
+    $('#font_customizer_save_google_font').on('click', onSaveGoogleFont);
+    $('#font_customizer_clear_google_history').on('click', onClearGoogleHistory);
     $('#font_customizer_size').on('input', onFontSizeChange);
     $('#font_customizer_line_height').on('input', onLineHeightChange);
     $('#font_customizer_letter_spacing').on('input', onLetterSpacingChange);
@@ -298,6 +338,7 @@ jQuery(async () => {
 
     // Load settings into UI and apply
     loadSettingsUI();
+    populateGoogleFontHistory();
     applyFontStyles();
 
     console.log(`[${MODULE_NAME}] Extension loaded.`);

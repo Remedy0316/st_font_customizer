@@ -29,8 +29,13 @@
             <!-- Google Font Name -->
             <div id="font_customizer_google_group" style="display:none;">
                 <label for="font_customizer_google_font">Google Font Name</label>
-                <input id="font_customizer_google_font" type="text" class="text_pole" placeholder="e.g. Roboto, Noto Sans SC" />
-                <small class="font_customizer_hint">Enter the exact name from <a href="https://fonts.google.com/" target="_blank">Google Fonts</a></small>
+                <input id="font_customizer_google_font" type="text" class="text_pole" list="font_customizer_google_font_list" placeholder="e.g. Roboto, Noto Sans SC" />
+                <datalist id="font_customizer_google_font_list"></datalist>
+                <div class="flex-container" style="margin-top: 4px; gap: 4px;">
+                    <input id="font_customizer_save_google_font" class="menu_button" type="button" value="Save Font" title="Save current font to history" />
+                    <input id="font_customizer_clear_google_history" class="menu_button" type="button" value="Clear History" title="Clear saved font history" />
+                </div>
+                <small class="font_customizer_hint">Enter the exact name from <a href="https://fonts.google.com/" target="_blank">Google Fonts</a>. Saved fonts appear as suggestions.</small>
             </div>
 
             <hr class="sysHR" />
