@@ -2,7 +2,7 @@
 // Allows users to customize font family, size, line height, and letter spacing.
 
 const MODULE_NAME = 'font_customizer';
-const extensionFolderPath = `scripts/extensions/third-party/st_font`;
+const extensionFolderPath = `scripts/extensions/third-party/st_font_customizer`;
 
 const defaultSettings = Object.freeze({
     enabled: false,
@@ -28,7 +28,8 @@ function getSettings() {
     }
     for (const key of Object.keys(defaultSettings)) {
         if (!Object.hasOwn(extensionSettings[MODULE_NAME], key)) {
-            extensionSettings[MODULE_NAME][key] = defaultSettings[key];
+            const val = defaultSettings[key];
+            extensionSettings[MODULE_NAME][key] = (typeof val === 'object' && val !== null) ? structuredClone(val) : val;
         }
     }
     return extensionSettings[MODULE_NAME];
@@ -311,6 +312,7 @@ function onResetClick() {
     extensionSettings[MODULE_NAME] = structuredClone(defaultSettings);
     saveSettingsDebounced();
     loadSettingsUI();
+    populateGoogleFontHistory();
     applyFontStyles();
     toastr.info('Font settings have been reset to defaults.');
 }
@@ -318,28 +320,32 @@ function onResetClick() {
 // ---- Initialization ----
 
 jQuery(async () => {
-    const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
+    try {
+        const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
 
-    // Append to right column (visual/UI related extensions)
-    $('#extensions_settings2').append(settingsHtml);
+        // Append to right column (visual/UI related extensions)
+        $('#extensions_settings2').append(settingsHtml);
 
-    // Bind event handlers
-    $('#font_customizer_enabled').on('change', onEnabledChange);
-    $('#font_customizer_source').on('change', onSourceChange);
-    $('#font_customizer_family').on('input', onFamilyChange);
-    $('#font_customizer_google_font').on('input', onGoogleFontChange);
-    $('#font_customizer_save_google_font').on('click', onSaveGoogleFont);
-    $('#font_customizer_clear_google_history').on('click', onClearGoogleHistory);
-    $('#font_customizer_size').on('input', onFontSizeChange);
-    $('#font_customizer_line_height').on('input', onLineHeightChange);
-    $('#font_customizer_letter_spacing').on('input', onLetterSpacingChange);
-    $('#font_customizer_scope').on('change', onScopeChange);
-    $('#font_customizer_reset').on('click', onResetClick);
+        // Bind event handlers
+        $('#font_customizer_enabled').on('change', onEnabledChange);
+        $('#font_customizer_source').on('change', onSourceChange);
+        $('#font_customizer_family').on('input', onFamilyChange);
+        $('#font_customizer_google_font').on('input', onGoogleFontChange);
+        $('#font_customizer_save_google_font').on('click', onSaveGoogleFont);
+        $('#font_customizer_clear_google_history').on('click', onClearGoogleHistory);
+        $('#font_customizer_size').on('input', onFontSizeChange);
+        $('#font_customizer_line_height').on('input', onLineHeightChange);
+        $('#font_customizer_letter_spacing').on('input', onLetterSpacingChange);
+        $('#font_customizer_scope').on('change', onScopeChange);
+        $('#font_customizer_reset').on('click', onResetClick);
 
-    // Load settings into UI and apply
-    loadSettingsUI();
-    populateGoogleFontHistory();
-    applyFontStyles();
+        // Load settings into UI and apply
+        loadSettingsUI();
+        populateGoogleFontHistory();
+        applyFontStyles();
 
-    console.log(`[${MODULE_NAME}] Extension loaded.`);
+        console.log(`[${MODULE_NAME}] Extension loaded.`);
+    } catch (error) {
+        console.error(`[${MODULE_NAME}] Failed to initialize:`, error);
+    }
 });
