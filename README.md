@@ -6,6 +6,7 @@ A third-party SillyTavern extension that lets you customize fonts in the chat in
 
 - **System / Generic Fonts** — Use any font installed on your system (e.g. `Arial`, `monospace`, `serif`).
 - **Google Fonts** — Load any font from [Google Fonts](https://fonts.google.com/) by name.
+- **Saved Fonts** — Save Google Fonts you like to a persistent list and quickly switch between them via a dropdown.
 - **Font Size** — Adjust font size (10–36 px).
 - **Line Height** — Control line spacing (1.0–3.0).
 - **Letter Spacing** — Fine-tune letter spacing (-2–5 px).
