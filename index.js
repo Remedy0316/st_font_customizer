@@ -269,12 +269,24 @@ function onClearGoogleHistory() {
 
 function populateGoogleFontHistory() {
     const settings = getSettings();
-    const datalist = $('#font_customizer_google_font_list');
-    datalist.empty();
+    const select = $('#font_customizer_google_font_select');
+    select.empty();
+    select.append($('<option>').val('').text('-- Select a saved font --'));
     if (!Array.isArray(settings.googleFontHistory)) return;
     for (const font of settings.googleFontHistory) {
-        datalist.append($('<option>').val(font));
+        const opt = $('<option>').val(font).text(font);
+        if (font === settings.googleFont) opt.prop('selected', true);
+        select.append(opt);
     }
+}
+
+function onGoogleFontSelectChange() {
+    const selected = String($('#font_customizer_google_font_select').val());
+    if (!selected) return;
+    const settings = getSettings();
+    settings.googleFont = selected;
+    $('#font_customizer_google_font').val(selected);
+    saveAndApply();
 }
 
 function onFontSizeChange() {
@@ -333,6 +345,7 @@ jQuery(async () => {
         $('#font_customizer_google_font').on('input', onGoogleFontChange);
         $('#font_customizer_save_google_font').on('click', onSaveGoogleFont);
         $('#font_customizer_clear_google_history').on('click', onClearGoogleHistory);
+        $('#font_customizer_google_font_select').on('change', onGoogleFontSelectChange);
         $('#font_customizer_size').on('input', onFontSizeChange);
         $('#font_customizer_line_height').on('input', onLineHeightChange);
         $('#font_customizer_letter_spacing').on('input', onLetterSpacingChange);
