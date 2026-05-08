@@ -4,6 +4,11 @@
 const MODULE_NAME = 'font_customizer';
 const extensionFolderPath = `scripts/extensions/third-party/st_font_customizer`;
 
+// Idempotency guard so init() is safe to call from both the manifest
+// `activate` hook (ST >= 1.17 with hook system) and the legacy jQuery
+// fallback below (older ST versions).
+let _initialized = false;
+
 const defaultSettings = Object.freeze({
     enabled: false,
     source: 'system',        // 'system' or 'google'
@@ -331,8 +336,19 @@ function onResetClick() {
 
 // ---- Initialization ----
 
-jQuery(async () => {
+/**
+ * Activate hook entry point. Called by SillyTavern's extension loader
+ * (manifest `hooks.activate`) on supported versions. Safe to call multiple
+ * times — guarded by `_initialized`.
+ */
+export async function init() {
+    if (_initialized) return;
+    _initialized = true;
+
     try {
+        // jQuery may not be ready yet if init() is called very early; wait for DOM ready.
+        await new Promise(resolve => jQuery(resolve));
+
         const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
 
         // Append to right column (visual/UI related extensions)
@@ -359,6 +375,36 @@ jQuery(async () => {
 
         console.log(`[${MODULE_NAME}] Extension loaded.`);
     } catch (error) {
+        // Reset guard so a retry (e.g. legacy fallback) can attempt again.
+        _initialized = false;
         console.error(`[${MODULE_NAME}] Failed to initialize:`, error);
     }
-});
+}
+
+/**
+ * Clean hook entry point. Called by SillyTavern when the user opts in to
+ * data cleanup (via the "Clean" button or the cleanup checkbox on uninstall).
+ * Removes persisted settings and any DOM nodes injected by this extension.
+ */
+export async function clean() {
+    try {
+        const ctx = SillyTavern.getContext();
+        if (ctx?.extensionSettings && Object.hasOwn(ctx.extensionSettings, MODULE_NAME)) {
+            delete ctx.extensionSettings[MODULE_NAME];
+            ctx.saveSettingsDebounced?.();
+        }
+    } catch (error) {
+        console.error(`[${MODULE_NAME}] Failed to clean settings:`, error);
+    }
+
+    // Remove injected DOM nodes (ST reloads the page after clean, but be tidy).
+    document.getElementById('font_customizer_dynamic_style')?.remove();
+    removeGoogleFontLink();
+
+    console.log(`[${MODULE_NAME}] Extension data cleaned.`);
+}
+
+// Legacy fallback for SillyTavern versions that do not yet support the
+// `hooks.activate` manifest field. On supported versions the activate hook
+// fires first and `_initialized` prevents this from running a second time.
+jQuery(() => { init(); });
