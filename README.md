@@ -10,7 +10,7 @@ A third-party SillyTavern extension that lets you customize fonts in the chat in
 - **Font Size** — Adjust font size (10–36 px).
 - **Line Height** — Control line spacing (1.0–3.0).
 - **Letter Spacing** — Fine-tune letter spacing (-2–5 px).
-- **Scope** — Apply changes to chat messages only or the entire UI.
+- **Scope** — Apply changes to chat messages only or the entire UI, including input fields such as the message compose area.
 - **Live Preview** — See a preview of your settings before committing.
 - **Reset** — One-click reset to defaults.
 
@@ -28,7 +28,7 @@ A third-party SillyTavern extension that lets you customize fonts in the chat in
    - **System / Generic** — Type a font family name (e.g. `Georgia`, `sans-serif`).
    - **Google Fonts** — Enter the exact font name from Google Fonts (e.g. `Roboto`, `Noto Sans SC`).
 4. Adjust size, line height, and letter spacing with the sliders.
-5. Select whether to apply changes to **Chat Messages Only** or the **Entire UI**.
+5. Select whether to apply changes to **Chat Messages Only** or the **Entire UI**. Entire UI also targets common form controls and SillyTavern's message compose textarea.
 
 Settings are saved automatically.
 

@@ -125,7 +125,17 @@ function applyFontStyles() {
     // Choose selector based on scope
     let css = '';
     if (settings.scope === 'ui') {
-        css = `body {\n    ${cssBlock}\n}`;
+        const uiSelector = [
+            'body',
+            'body input',
+            'body textarea',
+            'body select',
+            'body button',
+            'body [contenteditable="true"]',
+            '#send_textarea',
+        ].join(',\n');
+
+        css = `${uiSelector} {\n    ${cssBlock}\n}`;
     } else {
         // Chat messages only
         css = `#chat .mes_text {\n    ${cssBlock}\n}`;
