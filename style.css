@@ -48,6 +48,10 @@
     color: var(--SmartThemeErrorColor, #ff6b6b);
 }
 
+.font_customizer_status.uncertain {
+    color: var(--SmartThemeWarningColor, #f0d58c);
+}
+
 .font_customizer_status.generic {
     color: var(--SmartThemeEmColor, #9ecfff);
 }

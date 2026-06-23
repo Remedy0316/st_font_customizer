@@ -44,6 +44,64 @@ const genericFontFamilies = new Set([
     'revert',
     'revert-layer',
 ]);
+const platformFontHints = new Map([
+    ['windows', new Set([
+        'arial',
+        'bahnschrift',
+        'calibri',
+        'cambria',
+        'candara',
+        'comic sans ms',
+        'consolas',
+        'constantia',
+        'corbel',
+        'courier new',
+        'georgia',
+        'impact',
+        'lucida console',
+        'lucida sans unicode',
+        'microsoft sans serif',
+        'palatino linotype',
+        'segoe ui',
+        'tahoma',
+        'times new roman',
+        'trebuchet ms',
+        'verdana',
+    ])],
+    ['ios', new Set([
+        'arial',
+        'avenir',
+        'avenir next',
+        'courier',
+        'courier new',
+        'georgia',
+        'helvetica',
+        'helvetica neue',
+        'menlo',
+        'palatino',
+        'times new roman',
+        'trebuchet ms',
+        'verdana',
+    ])],
+    ['macos', new Set([
+        'arial',
+        'avenir',
+        'avenir next',
+        'courier',
+        'courier new',
+        'georgia',
+        'helvetica',
+        'helvetica neue',
+        'menlo',
+        'monaco',
+        'palatino',
+        'sf pro display',
+        'sf pro text',
+        'times new roman',
+        'trebuchet ms',
+        'verdana',
+    ])],
+]);
 
 /**
  * Get or initialize extension settings.
@@ -291,46 +349,135 @@ function getPrimarySpecificFont(fontFamily) {
     return fontNames.find(fontName => !genericFontFamilies.has(fontName.toLowerCase())) || '';
 }
 
-function isFontAvailableInCurrentBrowser(fontName) {
+function quoteFontFamilyName(fontName) {
+    const escapedFontName = normalizeFontName(fontName).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${escapedFontName}"`;
+}
+
+function measureFontWithCanvas(fontName) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return false;
+
+    const quotedFontName = quoteFontFamilyName(fontName);
+    const sampleTexts = [
+        'mmmmmmmmmmlliWWWWW 0123456789',
+        'The quick brown fox jumps over the lazy dog',
+        'Comic Sans MS Arial Segoe UI Georgia Verdana',
+    ];
+    const baseFamilies = ['monospace', 'serif', 'sans-serif'];
+    const fontSizes = [32, 72];
+
+    for (const fontSize of fontSizes) {
+        for (const sampleText of sampleTexts) {
+            for (const baseFamily of baseFamilies) {
+                context.font = `${fontSize}px ${baseFamily}`;
+                const baseWidth = context.measureText(sampleText).width;
+                context.font = `${fontSize}px ${quotedFontName}, ${baseFamily}`;
+                const testWidth = context.measureText(sampleText).width;
+
+                if (Math.abs(testWidth - baseWidth) > 0.1) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+function measureFontWithDom(fontName) {
+    if (!document.body) return false;
+
+    const sampleTexts = [
+        'mmmmmmmmmmlliWWWWW 0123456789',
+        'The quick brown fox jumps over the lazy dog',
+    ];
+    const baseFamilies = ['monospace', 'serif', 'sans-serif'];
+    const tester = document.createElement('span');
+    const quotedFontName = quoteFontFamilyName(fontName);
+
+    tester.style.position = 'absolute';
+    tester.style.left = '-9999px';
+    tester.style.top = '-9999px';
+    tester.style.fontSize = '72px';
+    tester.style.fontStyle = 'normal';
+    tester.style.fontWeight = '400';
+    tester.style.letterSpacing = '0';
+    tester.style.whiteSpace = 'nowrap';
+    document.body.appendChild(tester);
+
+    for (const sampleText of sampleTexts) {
+        const baseMeasurements = new Map();
+        tester.textContent = sampleText;
+
+        for (const baseFamily of baseFamilies) {
+            tester.style.fontFamily = baseFamily;
+            baseMeasurements.set(baseFamily, {
+                width: tester.offsetWidth,
+                height: tester.offsetHeight,
+            });
+        }
+
+        for (const baseFamily of baseFamilies) {
+            tester.style.fontFamily = `${quotedFontName}, ${baseFamily}`;
+            const baseMeasurement = baseMeasurements.get(baseFamily);
+            if (tester.offsetWidth !== baseMeasurement.width || tester.offsetHeight !== baseMeasurement.height) {
+                tester.remove();
+                return true;
+            }
+        }
+    }
+
+    tester.remove();
+    return false;
+}
+
+function getCurrentPlatformKey() {
+    const userAgent = navigator.userAgent || '';
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+
+    if (/iPad|iPhone|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && navigator.maxTouchPoints > 1)) {
+        return 'ios';
+    }
+    if (/Win/i.test(platform) || /Windows/i.test(userAgent)) {
+        return 'windows';
+    }
+    if (/Mac/i.test(platform) || /Mac OS X/i.test(userAgent)) {
+        return 'macos';
+    }
+    if (/Android/i.test(userAgent)) {
+        return 'android';
+    }
+    if (/Linux/i.test(platform) || /Linux/i.test(userAgent)) {
+        return 'linux';
+    }
+    return 'unknown';
+}
+
+function isExpectedPlatformFont(fontName) {
+    const platformFonts = platformFontHints.get(getCurrentPlatformKey());
+    return platformFonts?.has(normalizeFontName(fontName).toLowerCase()) || false;
+}
+
+function getFontAvailabilityInCurrentBrowser(fontName) {
     const normalizedName = normalizeFontName(fontName);
-    if (!normalizedName) return false;
+    if (!normalizedName) {
+        return { available: false, expectedPlatformFont: false };
+    }
 
     const cacheKey = normalizedName.toLowerCase();
     if (fontAvailabilityCache.has(cacheKey)) {
         return fontAvailabilityCache.get(cacheKey);
     }
 
-    const sampleText = 'mmmmmmmmmmlliWWWWW 0123456789';
-    const baseFamilies = ['monospace', 'serif', 'sans-serif'];
-    const tester = document.createElement('span');
-    const baseMeasurements = new Map();
+    const result = {
+        available: measureFontWithCanvas(normalizedName) || measureFontWithDom(normalizedName),
+        expectedPlatformFont: isExpectedPlatformFont(normalizedName),
+    };
 
-    tester.textContent = sampleText;
-    tester.style.position = 'absolute';
-    tester.style.left = '-9999px';
-    tester.style.top = '-9999px';
-    tester.style.fontSize = '72px';
-    tester.style.whiteSpace = 'nowrap';
-    document.body.appendChild(tester);
-
-    for (const baseFamily of baseFamilies) {
-        tester.style.fontFamily = baseFamily;
-        baseMeasurements.set(baseFamily, {
-            width: tester.offsetWidth,
-            height: tester.offsetHeight,
-        });
-    }
-
-    const escapedFontName = normalizedName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const isAvailable = baseFamilies.some(baseFamily => {
-        tester.style.fontFamily = `"${escapedFontName}", ${baseFamily}`;
-        const baseMeasurement = baseMeasurements.get(baseFamily);
-        return tester.offsetWidth !== baseMeasurement.width || tester.offsetHeight !== baseMeasurement.height;
-    });
-
-    tester.remove();
-    fontAvailabilityCache.set(cacheKey, isAvailable);
-    return isAvailable;
+    fontAvailabilityCache.set(cacheKey, result);
+    return result;
 }
 
 function getCurrentBrowserLabel() {
@@ -361,7 +508,7 @@ function updateSystemFontAvailability() {
     if (!status.length) return;
 
     const fontFamily = String(settings.fontFamily || '').trim();
-    status.removeClass('available unavailable generic');
+    status.removeClass('available unavailable uncertain generic');
 
     if (!fontFamily) {
         status.text('Enter a system font to check availability in this browser.');
@@ -378,12 +525,16 @@ function updateSystemFontAvailability() {
         return;
     }
 
-    if (isFontAvailableInCurrentBrowser(primarySpecificFont)) {
+    const availability = getFontAvailabilityInCurrentBrowser(primarySpecificFont);
+    if (availability.available) {
         status.addClass('available');
         status.text(`${primarySpecificFont} appears to be available in ${browserLabel}.`);
+    } else if (availability.expectedPlatformFont) {
+        status.addClass('available');
+        status.text(`${primarySpecificFont} is a common font for ${browserLabel}, but this browser check could not confirm it. If the preview uses it, it is working.`);
     } else {
-        status.addClass('unavailable');
-        status.text(`${primarySpecificFont} was not detected in ${browserLabel}; a fallback font may be used.`);
+        status.addClass('uncertain');
+        status.text(`${primarySpecificFont} could not be confirmed in ${browserLabel}. If the preview looks right, it is being used.`);
     }
 }
 
