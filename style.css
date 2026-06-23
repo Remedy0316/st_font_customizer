@@ -33,6 +33,25 @@
     margin-top: 2px;
 }
 
+.font_customizer_status {
+    display: block;
+    opacity: 0.75;
+    font-size: 0.85em;
+    margin-top: 2px;
+}
+
+.font_customizer_status.available {
+    color: var(--SmartThemeQuoteColor, #8bc34a);
+}
+
+.font_customizer_status.unavailable {
+    color: var(--SmartThemeErrorColor, #ff6b6b);
+}
+
+.font_customizer_status.generic {
+    color: var(--SmartThemeEmColor, #9ecfff);
+}
+
 .font_customizer_preview_box {
     border: 1px solid var(--SmartThemeBorderColor, #555);
     border-radius: 5px;

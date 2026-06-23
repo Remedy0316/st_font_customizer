@@ -24,6 +24,15 @@
             <div id="font_customizer_system_group">
                 <label for="font_customizer_family">Font Family</label>
                 <input id="font_customizer_family" type="text" class="text_pole" placeholder="e.g. Arial, serif, monospace" />
+                <label for="font_customizer_family_select" style="margin-top: 6px;">Saved Fonts</label>
+                <select id="font_customizer_family_select" class="text_pole">
+                    <option value="">-- Select a saved font --</option>
+                </select>
+                <div class="flex-container" style="margin-top: 4px; gap: 4px;">
+                    <input id="font_customizer_save_family" class="menu_button" type="button" value="Save Font" title="Save current system font to history" />
+                    <input id="font_customizer_clear_family_history" class="menu_button" type="button" value="Clear History" title="Clear saved system font history" />
+                </div>
+                <small id="font_customizer_system_font_status" class="font_customizer_status">Current browser font availability will appear here.</small>
             </div>
 
             <!-- Google Font Name -->

@@ -13,6 +13,7 @@ const defaultSettings = Object.freeze({
     enabled: false,
     source: 'system',        // 'system' or 'google'
     fontFamily: '',           // system/generic font family
+    fontFamilyHistory: [],     // saved system/generic font names
     googleFont: '',           // Google Fonts font name
     googleFontHistory: [],    // saved Google Font names
     fontSize: 0,              // 0 = use default
@@ -22,6 +23,27 @@ const defaultSettings = Object.freeze({
 });
 
 let currentGoogleFontLink = null;
+const fontAvailabilityCache = new Map();
+const genericFontFamilies = new Set([
+    'serif',
+    'sans-serif',
+    'monospace',
+    'cursive',
+    'fantasy',
+    'system-ui',
+    'ui-serif',
+    'ui-sans-serif',
+    'ui-monospace',
+    'ui-rounded',
+    'emoji',
+    'math',
+    'fangsong',
+    'inherit',
+    'initial',
+    'unset',
+    'revert',
+    'revert-layer',
+]);
 
 /**
  * Get or initialize extension settings.
@@ -219,6 +241,149 @@ function toggleFontSourceUI(source) {
     } else {
         $('#font_customizer_system_group').show();
         $('#font_customizer_google_group').hide();
+        updateSystemFontAvailability();
+    }
+}
+
+function parseFontFamilyList(fontFamily) {
+    const fontNames = [];
+    let currentName = '';
+    let quoteCharacter = null;
+
+    for (const character of fontFamily) {
+        if ((character === '"' || character === "'") && !quoteCharacter) {
+            quoteCharacter = character;
+            currentName += character;
+            continue;
+        }
+
+        if (character === quoteCharacter) {
+            quoteCharacter = null;
+            currentName += character;
+            continue;
+        }
+
+        if (character === ',' && !quoteCharacter) {
+            const parsedName = normalizeFontName(currentName);
+            if (parsedName) fontNames.push(parsedName);
+            currentName = '';
+            continue;
+        }
+
+        currentName += character;
+    }
+
+    const parsedName = normalizeFontName(currentName);
+    if (parsedName) fontNames.push(parsedName);
+    return fontNames;
+}
+
+function normalizeFontName(fontName) {
+    let normalizedName = String(fontName || '').trim();
+    if ((normalizedName.startsWith('"') && normalizedName.endsWith('"')) || (normalizedName.startsWith("'") && normalizedName.endsWith("'"))) {
+        normalizedName = normalizedName.slice(1, -1).trim();
+    }
+    return normalizedName;
+}
+
+function getPrimarySpecificFont(fontFamily) {
+    const fontNames = parseFontFamilyList(fontFamily);
+    return fontNames.find(fontName => !genericFontFamilies.has(fontName.toLowerCase())) || '';
+}
+
+function isFontAvailableInCurrentBrowser(fontName) {
+    const normalizedName = normalizeFontName(fontName);
+    if (!normalizedName) return false;
+
+    const cacheKey = normalizedName.toLowerCase();
+    if (fontAvailabilityCache.has(cacheKey)) {
+        return fontAvailabilityCache.get(cacheKey);
+    }
+
+    const sampleText = 'mmmmmmmmmmlliWWWWW 0123456789';
+    const baseFamilies = ['monospace', 'serif', 'sans-serif'];
+    const tester = document.createElement('span');
+    const baseMeasurements = new Map();
+
+    tester.textContent = sampleText;
+    tester.style.position = 'absolute';
+    tester.style.left = '-9999px';
+    tester.style.top = '-9999px';
+    tester.style.fontSize = '72px';
+    tester.style.whiteSpace = 'nowrap';
+    document.body.appendChild(tester);
+
+    for (const baseFamily of baseFamilies) {
+        tester.style.fontFamily = baseFamily;
+        baseMeasurements.set(baseFamily, {
+            width: tester.offsetWidth,
+            height: tester.offsetHeight,
+        });
+    }
+
+    const escapedFontName = normalizedName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const isAvailable = baseFamilies.some(baseFamily => {
+        tester.style.fontFamily = `"${escapedFontName}", ${baseFamily}`;
+        const baseMeasurement = baseMeasurements.get(baseFamily);
+        return tester.offsetWidth !== baseMeasurement.width || tester.offsetHeight !== baseMeasurement.height;
+    });
+
+    tester.remove();
+    fontAvailabilityCache.set(cacheKey, isAvailable);
+    return isAvailable;
+}
+
+function getCurrentBrowserLabel() {
+    const userAgent = navigator.userAgent || '';
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+
+    if (/iPad|iPhone|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && navigator.maxTouchPoints > 1)) {
+        return 'this iOS/iPadOS browser';
+    }
+    if (/Win/i.test(platform) || /Windows/i.test(userAgent)) {
+        return 'this Windows browser';
+    }
+    if (/Mac/i.test(platform) || /Mac OS X/i.test(userAgent)) {
+        return 'this macOS browser';
+    }
+    if (/Android/i.test(userAgent)) {
+        return 'this Android browser';
+    }
+    if (/Linux/i.test(platform) || /Linux/i.test(userAgent)) {
+        return 'this Linux browser';
+    }
+    return 'this browser';
+}
+
+function updateSystemFontAvailability() {
+    const settings = getSettings();
+    const status = $('#font_customizer_system_font_status');
+    if (!status.length) return;
+
+    const fontFamily = String(settings.fontFamily || '').trim();
+    status.removeClass('available unavailable generic');
+
+    if (!fontFamily) {
+        status.text('Enter a system font to check availability in this browser.');
+        return;
+    }
+
+    const fontNames = parseFontFamilyList(fontFamily);
+    const primarySpecificFont = getPrimarySpecificFont(fontFamily);
+    const browserLabel = getCurrentBrowserLabel();
+
+    if (!primarySpecificFont) {
+        status.addClass('generic');
+        status.text(`${fontNames[0] || fontFamily} is a generic CSS family and should work in ${browserLabel}.`);
+        return;
+    }
+
+    if (isFontAvailableInCurrentBrowser(primarySpecificFont)) {
+        status.addClass('available');
+        status.text(`${primarySpecificFont} appears to be available in ${browserLabel}.`);
+    } else {
+        status.addClass('unavailable');
+        status.text(`${primarySpecificFont} was not detected in ${browserLabel}; a fallback font may be used.`);
     }
 }
 
@@ -246,6 +411,57 @@ function onSourceChange() {
 function onFamilyChange() {
     const settings = getSettings();
     settings.fontFamily = String($('#font_customizer_family').val()).trim();
+    updateSystemFontAvailability();
+    saveAndApply();
+}
+
+function onSaveSystemFont() {
+    const settings = getSettings();
+    const fontName = settings.fontFamily;
+    if (!fontName) return;
+    if (!Array.isArray(settings.fontFamilyHistory)) {
+        settings.fontFamilyHistory = [];
+    }
+    if (!settings.fontFamilyHistory.includes(fontName)) {
+        settings.fontFamilyHistory.push(fontName);
+        const { saveSettingsDebounced } = SillyTavern.getContext();
+        saveSettingsDebounced();
+        populateSystemFontHistory();
+        toastr.success(`"${fontName}" saved to system font history.`);
+    } else {
+        toastr.info(`"${fontName}" is already in system font history.`);
+    }
+}
+
+function onClearSystemHistory() {
+    const settings = getSettings();
+    settings.fontFamilyHistory = [];
+    const { saveSettingsDebounced } = SillyTavern.getContext();
+    saveSettingsDebounced();
+    populateSystemFontHistory();
+    toastr.info('System font history cleared.');
+}
+
+function populateSystemFontHistory() {
+    const settings = getSettings();
+    const select = $('#font_customizer_family_select');
+    select.empty();
+    select.append($('<option>').val('').text('-- Select a saved font --'));
+    if (!Array.isArray(settings.fontFamilyHistory)) return;
+    for (const font of settings.fontFamilyHistory) {
+        const opt = $('<option>').val(font).text(font);
+        if (font === settings.fontFamily) opt.prop('selected', true);
+        select.append(opt);
+    }
+}
+
+function onSystemFontSelectChange() {
+    const selected = String($('#font_customizer_family_select').val());
+    if (!selected) return;
+    const settings = getSettings();
+    settings.fontFamily = selected;
+    $('#font_customizer_family').val(selected);
+    updateSystemFontAvailability();
     saveAndApply();
 }
 
@@ -339,6 +555,7 @@ function onResetClick() {
     extensionSettings[MODULE_NAME] = structuredClone(defaultSettings);
     saveSettingsDebounced();
     loadSettingsUI();
+    populateSystemFontHistory();
     populateGoogleFontHistory();
     applyFontStyles();
     toastr.info('Font settings have been reset to defaults.');
@@ -368,6 +585,9 @@ export async function init() {
         $('#font_customizer_enabled').on('change', onEnabledChange);
         $('#font_customizer_source').on('change', onSourceChange);
         $('#font_customizer_family').on('input', onFamilyChange);
+        $('#font_customizer_save_family').on('click', onSaveSystemFont);
+        $('#font_customizer_clear_family_history').on('click', onClearSystemHistory);
+        $('#font_customizer_family_select').on('change', onSystemFontSelectChange);
         $('#font_customizer_google_font').on('input', onGoogleFontChange);
         $('#font_customizer_save_google_font').on('click', onSaveGoogleFont);
         $('#font_customizer_clear_google_history').on('click', onClearGoogleHistory);
@@ -380,6 +600,7 @@ export async function init() {
 
         // Load settings into UI and apply
         loadSettingsUI();
+        populateSystemFontHistory();
         populateGoogleFontHistory();
         applyFontStyles();
 

@@ -5,6 +5,8 @@ A third-party SillyTavern extension that lets you customize fonts in the chat in
 ## Features
 
 - **System / Generic Fonts** — Use any font installed on your system (e.g. `Arial`, `monospace`, `serif`).
+- **Saved System Fonts** — Save previously used system/generic font stacks and switch between them from a dropdown.
+- **Browser Font Check** — See whether the selected system font appears to be available in the browser currently viewing SillyTavern.
 - **Google Fonts** — Load any font from [Google Fonts](https://fonts.google.com/) by name.
 - **Saved Fonts** — Save Google Fonts you like to a persistent list and quickly switch between them via a dropdown.
 - **Font Size** — Adjust font size (10–36 px).
@@ -27,6 +29,7 @@ A third-party SillyTavern extension that lets you customize fonts in the chat in
 3. Choose a font source:
    - **System / Generic** — Type a font family name (e.g. `Georgia`, `sans-serif`).
    - **Google Fonts** — Enter the exact font name from Google Fonts (e.g. `Roboto`, `Noto Sans SC`).
+   System / Generic fonts can be saved to a local history dropdown. The availability check reports only the current browser/device, so a font detected on Windows may still be missing from Safari on iOS unless that device has an equivalent font available.
 4. Adjust size, line height, and letter spacing with the sliders.
 5. Select whether to apply changes to **Chat Messages Only** or the **Entire UI**. Entire UI also targets common form controls and SillyTavern's message compose textarea.
 
