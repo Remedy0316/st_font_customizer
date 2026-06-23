@@ -349,6 +349,14 @@ function getPrimarySpecificFont(fontFamily) {
     return fontNames.find(fontName => !genericFontFamilies.has(fontName.toLowerCase())) || '';
 }
 
+function sortFontHistory(fontHistory) {
+    if (!Array.isArray(fontHistory)) return [];
+    return [...fontHistory].sort((firstFont, secondFont) => normalizeFontName(firstFont).localeCompare(normalizeFontName(secondFont), undefined, {
+        sensitivity: 'base',
+        numeric: true,
+    }));
+}
+
 function quoteFontFamilyName(fontName) {
     const escapedFontName = normalizeFontName(fontName).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     return `"${escapedFontName}"`;
@@ -575,6 +583,7 @@ function onSaveSystemFont() {
     }
     if (!settings.fontFamilyHistory.includes(fontName)) {
         settings.fontFamilyHistory.push(fontName);
+        settings.fontFamilyHistory = sortFontHistory(settings.fontFamilyHistory);
         const { saveSettingsDebounced } = SillyTavern.getContext();
         saveSettingsDebounced();
         populateSystemFontHistory();
@@ -599,7 +608,7 @@ function populateSystemFontHistory() {
     select.empty();
     select.append($('<option>').val('').text('-- Select a saved font --'));
     if (!Array.isArray(settings.fontFamilyHistory)) return;
-    for (const font of settings.fontFamilyHistory) {
+    for (const font of sortFontHistory(settings.fontFamilyHistory)) {
         const opt = $('<option>').val(font).text(font);
         if (font === settings.fontFamily) opt.prop('selected', true);
         select.append(opt);
@@ -631,6 +640,7 @@ function onSaveGoogleFont() {
     }
     if (!settings.googleFontHistory.includes(fontName)) {
         settings.googleFontHistory.push(fontName);
+        settings.googleFontHistory = sortFontHistory(settings.googleFontHistory);
         const { saveSettingsDebounced } = SillyTavern.getContext();
         saveSettingsDebounced();
         populateGoogleFontHistory();
@@ -655,7 +665,7 @@ function populateGoogleFontHistory() {
     select.empty();
     select.append($('<option>').val('').text('-- Select a saved font --'));
     if (!Array.isArray(settings.googleFontHistory)) return;
-    for (const font of settings.googleFontHistory) {
+    for (const font of sortFontHistory(settings.googleFontHistory)) {
         const opt = $('<option>').val(font).text(font);
         if (font === settings.googleFont) opt.prop('selected', true);
         select.append(opt);
