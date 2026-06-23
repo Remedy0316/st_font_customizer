@@ -217,8 +217,13 @@ function applyFontStyles() {
 
         css = `${uiSelector} {\n    ${cssBlock}\n}`;
     } else {
-        // Chat messages only
-        css = `#chat .mes_text {\n    ${cssBlock}\n}`;
+        // Chat text surfaces only: messages plus the reply composer.
+        const chatSelector = [
+            '#chat .mes_text',
+            '#send_textarea',
+        ].join(',\n');
+
+        css = `${chatSelector} {\n    ${cssBlock}\n}`;
     }
 
     styleEl.textContent = css;
